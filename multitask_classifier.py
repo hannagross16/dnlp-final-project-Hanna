@@ -65,7 +65,10 @@ class MultitaskBERT(nn.Module):
             elif config.option == "finetune":
                 param.requires_grad = True
         ### TODO
-        raise NotImplementedError
+        self.sentiment_layer = nn.Linear(BERT_HIDDEN_SIZE, N_SENTIMENT_CLASSES)
+        self.paraphrase_layer = nn.Linear(BERT_HIDDEN_SIZE, 1)
+        self.similarity_layer = nn.Linear(BERT_HIDDEN_SIZE, 1)
+        self.paraphrase_type_layer = nn.Linear(BERT_HIDDEN_SIZE, 7)
 
     def forward(self, input_ids, attention_mask):
         """Takes a batch of sentences and produces embeddings for them."""
@@ -75,8 +78,10 @@ class MultitaskBERT(nn.Module):
         # Here, you can start by just returning the embeddings straight from BERT.
         # When thinking of improvements, you can later try modifying this
         # (e.g., by adding other layers).
-        ### TODO
-        raise NotImplementedError
+        ### TODO done
+        bert_embeddings = self.bert(input_ids, attention_mask)
+        pooler_output = bert_embeddings.pooler_output #todo richtige Daten genommen?
+        return pooler_output
 
     def predict_sentiment(self, input_ids, attention_mask):
         """
@@ -86,8 +91,10 @@ class MultitaskBERT(nn.Module):
         Thus, your output should contain 5 logits for each sentence.
         Dataset: SST
         """
-        ### TODO
-        raise NotImplementedError
+        ### TODO done
+        embedding = self.forward(input_ids, attention_mask)
+        sentiment_pred = self.sentiment_layer(embedding)
+        return sentiment_pred
 
     def predict_paraphrase(self, input_ids_1, attention_mask_1, input_ids_2, attention_mask_2):
         """
@@ -96,8 +103,12 @@ class MultitaskBERT(nn.Module):
         during evaluation, and handled as a logit by the appropriate loss function.
         Dataset: Quora
         """
-        ### TODO
-        raise NotImplementedError
+        ### TODO done
+        embedding1 = self.forward(input_ids_1, attention_mask_1)
+        embedding2 = self.forward(input_ids_2, attention_mask_2)
+        combined_embeddings = torch.cat((embedding1, embedding2), dim=1)
+        logit = self.paraphrase_layer(combined_embeddings)
+        return logit
 
     def predict_similarity(self, input_ids_1, attention_mask_1, input_ids_2, attention_mask_2):
         """
@@ -106,8 +117,13 @@ class MultitaskBERT(nn.Module):
         it will be handled as a logit by the appropriate loss function.
         Dataset: STS
         """
-        ### TODO
-        raise NotImplementedError
+        ### TODO done
+        embedding1 = self.forward(input_ids_1, attention_mask_1)
+        embedding2 = self.forward(input_ids_2, attention_mask_2)
+        combined_embeddings = torch.cat((embedding1, embedding2), dim=1)
+        logit = self.paraphrase_layer(combined_embeddings)
+        normed_logit = F.sigmoid(logit)*5
+        return normed_logit
 
     def predict_paraphrase_types(
         self, input_ids_1, attention_mask_1, input_ids_2, attention_mask_2
@@ -119,8 +135,12 @@ class MultitaskBERT(nn.Module):
         during evaluation, and handled as a logit by the appropriate loss function.
         Dataset: ETPC
         """
-        ### TODO
-        raise NotImplementedError
+        ### TODO done
+        embedding1 = self.forward(input_ids_1, attention_mask_1)
+        embedding2 = self.forward(input_ids_2, attention_mask_2)
+        combined_embeddings = torch.cat((embedding1, embedding2), dim=1)
+        logit = self.paraphrase_type_layer(combined_embeddings)
+        return logit
 
 
 def save_model(model, optimizer, args, config, filepath):
@@ -176,8 +196,55 @@ def train_multitask(args):
             batch_size=args.batch_size,
             collate_fn=sst_dev_data.collate_fn,
         )
+    elif args.task == "sts" or args.task == "multitask":
+        sts_train_data = SentenceClassificationDataset(sts_train_data, args)
+        sts_dev_data = SentenceClassificationDataset(sts_dev_data, args)
 
-    ### TODO
+        sts_train_dataloader = DataLoader(
+            sts_train_data,
+            shuffle=True,
+            batch_size=args.batch_size,
+            collate_fn=sts_train_data.collate_fn,
+        )
+        sts_dev_dataloader = DataLoader(
+            sts_dev_data,
+            shuffle=False,
+            batch_size=args.batch_size,
+            collate_fn=sts_dev_data.collate_fn,
+        )
+    elif args.task == "qqp" or args.task == "multitask":
+        quora_train_data = SentenceClassificationDataset(quora_train_data, args)
+        quora_dev_data = SentenceClassificationDataset(quora_dev_data, args)
+
+        quora_train_dataloader = DataLoader(
+            quora_train_data,
+            shuffle=True,
+            batch_size=args.batch_size,
+            collate_fn=quora_train_data.collate_fn,
+        )
+        quora_dev_dataloader = DataLoader(
+            quora_dev_data,
+            shuffle=False,
+            batch_size=args.batch_size,
+            collate_fn=quora_dev_data.collate_fn,
+        )
+    elif args.task == "etpc" or args.task == "multitask":
+        etpc_train_data = SentenceClassificationDataset(etpc_train_data, args)
+        etpc_dev_data = SentenceClassificationDataset(etpc_dev_data, args)
+
+        etpc_train_dataloader = DataLoader(
+            etpc_train_data,
+            shuffle=True,
+            batch_size=args.batch_size,
+            collate_fn=etpc_train_data.collate_fn,
+        )
+        etpc_dev_dataloader = DataLoader(
+            etpc_dev_data,
+            shuffle=False,
+            batch_size=args.batch_size,
+            collate_fn=etpc_dev_data.collate_fn,
+        )
+    ### TODO !!
     #   Load data for the other datasets
     # If you are doing the paraphrase type detection with the minBERT model as well, make sure
     # to transform the the data labels into binaries (as required in the bart_detection.py script)
