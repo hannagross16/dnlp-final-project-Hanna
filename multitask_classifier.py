@@ -530,7 +530,7 @@ def split_test_train(filename='data/etpc-paraphrase-train_full.csv', test_size=0
         train_size_idx = n_samples - test_size_idx
     else:
         train_size_idx = int(test_size * n_samples)
-    test_idx, train_idx = indices[test_size_idx], indices[train_size_idx]
+    test_idx, train_idx = indices[:test_size_idx], indices[-train_size_idx:]
     test_data, train_data = data[test_idx], data[train_idx]
     dev_name = filename.replace('train', 'dev').replace('_full', '')
     train_name = filename.replace('_full', '')
