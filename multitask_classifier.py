@@ -8,6 +8,7 @@ import time
 from types import SimpleNamespace
 
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -419,6 +420,7 @@ def get_args():
     # TODO
     # You should split the train data into a train and dev set first and change the
     # default path of the --etpc_dev argument to your dev set.
+    split_test_train(test_size=0.3)
     parser.add_argument("--etpc_train", type=str, default="data/etpc-paraphrase-train.csv")
     parser.add_argument("--etpc_dev", type=str, default="data/etpc-paraphrase-dev.csv")
     parser.add_argument(
@@ -515,6 +517,29 @@ def get_args():
 
     args = parser.parse_args()
     return args
+
+def split_test_train(filename='data/etpc-paraphrase-train_full.csv', test_size=0.3, train_size=None):
+    df = pd.read_csv(filename, sep='\t')
+    data = df.to_numpy()
+    n_samples = data.shape[0]
+    indices = np.random.permutation(n_samples)
+    test_size_idx = int(test_size * n_samples)
+    #todo test input vals
+    if not train_size:
+        #train_size = 1 - test_size
+        train_size_idx = n_samples - test_size_idx
+    else:
+        train_size_idx = int(test_size * n_samples)
+    test_idx, train_idx = indices[test_size_idx], indices[train_size_idx]
+    test_data, train_data = data[test_idx], data[train_idx]
+    dev_name = filename.replace('train', 'dev').replace('_full', '')
+    train_name = filename.replace('_full', '')
+    pd.DataFrame(train_data).to_csv(train_name, sep='\t', index=False)
+    pd.DataFrame(test_data).to_csv(dev_name, sep='\t', index=False)
+    return 0
+
+
+
 
 
 if __name__ == "__main__":

@@ -1,0 +1,9 @@
+0
+Most times, wholesalers sold the questionable drugs to one of three huge national distributors that supply virtually all drugs in the country.
+At one point in the chain, a wholesaler would sell the questionable drugs to one of three huge national companies that supply virtually all drugs in this country.
+[1, 2, 6, 0, 0, 0, 0]
+[6, 6, 6, 1, 1, 6, 6, 6, 6, 6, 6, 6, 6, 6, 2, 6, 6, 6, 6, 6, 6, 2, 6, 6]
+[6, 6, 6, 6, 6, 6, 6, 0, 1, 1, 1, 6, 6, 6, 6, 6, 6, 6, 6, 6, 2, 6, 6, 6, 6, 6, 6, 2, 6, 6]
+['Most', 'times', ',', 'wholesalers', 'sold', 'the', 'questionable', 'drugs', 'to', 'one', 'of', 'three', 'huge', 'national', 'distributors', 'that', 'supply', 'virtually', 'all', 'drugs', 'in', 'the', 'country', '.']
+['At', 'one', 'point', 'in', 'the', 'chain', ',', 'a', 'wholesaler', 'would', 'sell', 'the', 'questionable', 'drugs', 'to', 'one', 'of', 'three', 'huge', 'national', 'companies', 'that', 'supply', 'virtually', 'all', 'drugs', 'in', 'this', 'country', '.\n']
+30cb33f37ced442e9a47d133f950360a
