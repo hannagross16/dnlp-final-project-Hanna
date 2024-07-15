@@ -104,9 +104,9 @@ class BertLayer(nn.Module):
         """
         output_dense_layer = dropout(dense_layer(output))
         #normed_dense_output = ln_layer(output_dense_layer)
-        res_connection = input +  output_dense_layer #normed_dense_output
-        normed_dense_output = ln_layer(output_dense_layer)
-        return res_connection
+        res_connection = input + output_dense_layer #normed_dense_output
+        normed_dense_output = ln_layer(res_connection)
+        return normed_dense_output
         #res_connection = input + output_dense_layer
         # normed_res_con = ln_layer(res_connection) #TODO oder hier?
         #return normed_res_con
