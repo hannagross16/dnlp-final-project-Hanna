@@ -51,7 +51,7 @@ class BertSelfAttention(nn.Module):
         # adding tokens with a large negative number.
         masked_score = normalized_score + attention_mask
         # Multiply the attention scores to the value and get back V'.
-        attention = torch.softmax(masked_score, dim=1)@value
+        attention = self.dropout(torch.softmax(masked_score, axis=-1))@value
         # Next, we need to concat multi-heads and recover the original shape
         # [bs, seq_len, num_attention_heads * attention_head_size = hidden_size].
         return attention.permute(0,2,1,3).flatten(-2) #attention.mT.flatten(-1)
@@ -103,8 +103,9 @@ class BertLayer(nn.Module):
         ln_layer: the layer norm to be applied
         """
         output_dense_layer = dropout(dense_layer(output))
+        #normed_dense_output = ln_layer(output_dense_layer)
+        res_connection = input +  output_dense_layer #normed_dense_output
         normed_dense_output = ln_layer(output_dense_layer)
-        res_connection = input + normed_dense_output
         return res_connection
         #res_connection = input + output_dense_layer
         # normed_res_con = ln_layer(res_connection) #TODO oder hier?
