@@ -81,7 +81,7 @@ class MultitaskBERT(nn.Module):
         # (e.g., by adding other layers).
         ### TODO done
         bert_embeddings = self.bert(input_ids, attention_mask)
-        pooler_output = bert_embeddings.pooler_output #todo richtige Daten genommen?
+        pooler_output = bert_embeddings['pooler_output'] #todo richtige Daten genommen?
         return pooler_output
 
     def predict_sentiment(self, input_ids, attention_mask):
@@ -309,7 +309,27 @@ def train_multitask(args):
         if args.task == "sts" or args.task == "multitask":
             # Trains the model on the sts dataset
             ### TODO
-            raise NotImplementedError
+            for batch in tqdm(
+                    sts_train_dataloader, desc=f"train-{epoch + 1:02}", disable=TQDM_DISABLE
+            ):
+                b_ids, b_mask, b_labels = (
+                    batch["token_ids"],
+                    batch["attention_mask"],
+                    batch["labels"],
+                )
+
+                b_ids = b_ids.to(device)
+                b_mask = b_mask.to(device)
+                b_labels = b_labels.to(device)
+
+                optimizer.zero_grad()
+                logits = model.predict_similarity(b_ids, b_mask)
+                loss = F.cross_entropy(logits, b_labels.view(-1))
+                loss.backward()
+                optimizer.step()
+
+                train_loss += loss.item()
+                num_batches += 1
 
         if args.task == "qqp" or args.task == "multitask":
             # Trains the model on the qqp dataset
@@ -534,8 +554,8 @@ def split_test_train(filename='data/etpc-paraphrase-train_full.csv', test_size=0
     test_data, train_data = data[test_idx], data[train_idx]
     dev_name = filename.replace('train', 'dev').replace('_full', '')
     train_name = filename.replace('_full', '')
-    pd.DataFrame(train_data).to_csv(train_name, sep='\t', index=False)
-    pd.DataFrame(test_data).to_csv(dev_name, sep='\t', index=False)
+    pd.DataFrame(train_data, columns=df.columns).to_csv(train_name, sep='\t', index=False)
+    pd.DataFrame(test_data, columns=df.columns).to_csv(dev_name, sep='\t', index=False)
     return 0
 
 

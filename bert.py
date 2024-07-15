@@ -43,8 +43,8 @@ class BertSelfAttention(nn.Module):
         # and k-th token, given by i-th attention head before normalizing the scores,
         # use the attention mask to mask out the padding token scores.
 
-        d_k = key.shape[1]
-        score = query @ key.T
+        d_k = key.shape[-1]
+        score = query @ key.permute(0,1,3,2) #key.mT
         # Normalize the scores.
         normalized_score = score / d_k**0.5
         # Note again: in the attention_mask non-padding tokens are marked with 0 and
@@ -54,7 +54,7 @@ class BertSelfAttention(nn.Module):
         attention = torch.softmax(masked_score, dim=1)@value
         # Next, we need to concat multi-heads and recover the original shape
         # [bs, seq_len, num_attention_heads * attention_head_size = hidden_size].
-        return attention
+        return attention.permute(0,2,1,3).flatten(-2) #attention.mT.flatten(-1)
         ### TODO
 
 
@@ -198,7 +198,7 @@ class BertModel(BertPreTrainedModel):
         tk_type_ids = torch.zeros(input_shape, dtype=torch.long, device=input_ids.device)
         tk_type_embeds = self.tk_type_embedding(tk_type_ids)
 
-        ### TODO
+        ### TODO done
         embedding_sum = inputs_embeds + pos_embeds + tk_type_embeds
         hidden_states = self.embed_dropout(self.embed_layer_norm(embedding_sum))
         return hidden_states
