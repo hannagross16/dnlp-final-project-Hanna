@@ -57,8 +57,8 @@ class AdamW(Optimizer):
                 # State should be stored in this dictionary
                 state = self.state[p]
                 if state == {}:
-                    state['m_t'] = np.zeros_like(grad)
-                    state['v_t'] = np.zeros_like(grad)
+                    state['m_t'] = torch.zeros_like(grad)
+                    state['v_t'] = torch.zeros_like(grad)
                     state['t'] = 0
 
                 state['t'] += 1
@@ -68,24 +68,25 @@ class AdamW(Optimizer):
                 # The hyperparameters can be read from the `group` dictionary
                 # (they are lr, betas, eps, weight_decay, and correct_bias, as saved in
                 # the constructor).
-                g_t = grad + weight_decay * p.data
+                g_t = grad + weight_decay * p.data * alpha
                 #
                 # 1- Update first and second moments of the gradients.
-                m_t = beta1 * state['m_t'] + (1-beta1) * g_t
-                v_t = beta2 * state['v_t'] + (1-beta2) * g_t**2
-                state['m_t'] = m_t
-                state['v_t'] = v_t
+                state['m_t'] = beta1 * state['m_t'] + (1-beta1) * g_t
+                state['v_t'] = beta2 * state['v_t'] + (1-beta2) * g_t**2
                 # 2- Apply bias correction.
                 #    (using the "efficient version" given in https://arxiv.org/abs/1412.6980;
                 #     also given as the pseudo-code in the project description).
                 if correct_bias:
                     alpha_t = alpha * (1-beta2**state['t'])**0.5 / (1-beta1**state['t'])
                     # 3- Update parameters (p.data).
-                    p.data = p.data - alpha_t * state['m_t'] / ((state['v_t'])**0.5+eps)
+                    p.data = p.data - alpha_t * state['m_t'] / (torch.sqrt(state['v_t'])+ eps)
+                    # 4- After that main gradient-based update, update again using weight decay
+                    #    (incorporating the learning rate again).
+                    p.data -= alpha * weight_decay * p.data
                 else:
-                    p.data = p.data - alpha * state['m_t'] / ((state['v_t'])**0.5 + eps)
-                # 4- After that main gradient-based update, update again using weight decay
-                #    (incorporating the learning rate again).
+                    p.data = p.data - alpha * state['m_t'] / (torch.sqrt(state['v_t']) + eps)
+                    p.data -= alpha * weight_decay * p.data
+
 
                 ### TODO
 
