@@ -28,7 +28,7 @@ bert = BertModel.from_pretrained("bert-base-uncased")
 outputs = bert(sent_ids, att_mask)
 att_mask = att_mask.unsqueeze(-1)
 outputs["last_hidden_state"] = outputs["last_hidden_state"] * att_mask
-gisanity_data["last_hidden_state"] = sanity_data["last_hidden_state"] * att_mask
+sanity_data["last_hidden_state"] = sanity_data["last_hidden_state"] * att_mask
 
 # Compare outputs
 for k in ["last_hidden_state", "pooler_output"]:
