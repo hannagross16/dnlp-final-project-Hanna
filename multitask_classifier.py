@@ -65,7 +65,7 @@ class MultitaskBERT(nn.Module):
                 param.requires_grad = False
             elif config.option == "finetune":
                 param.requires_grad = True
-        ### TODO
+        ### TODO done
         self.sentiment_layer = nn.Linear(BERT_HIDDEN_SIZE, N_SENTIMENT_CLASSES)
         self.paraphrase_layer = nn.Linear(BERT_HIDDEN_SIZE, 1)
         self.similarity_layer = nn.Linear(BERT_HIDDEN_SIZE, 1)
@@ -198,8 +198,8 @@ def train_multitask(args):
             collate_fn=sst_dev_data.collate_fn,
         )
     elif args.task == "sts" or args.task == "multitask":
-        sts_train_data = SentenceClassificationDataset(sts_train_data, args)
-        sts_dev_data = SentenceClassificationDataset(sts_dev_data, args)
+        sts_train_data = SentencePairDataset(sts_train_data, args, isRegression=True)
+        sts_dev_data = SentencePairDataset(sts_dev_data, args)
 
         sts_train_dataloader = DataLoader(
             sts_train_data,
@@ -214,8 +214,8 @@ def train_multitask(args):
             collate_fn=sts_dev_data.collate_fn,
         )
     elif args.task == "qqp" or args.task == "multitask":
-        quora_train_data = SentenceClassificationDataset(quora_train_data, args)
-        quora_dev_data = SentenceClassificationDataset(quora_dev_data, args)
+        quora_train_data = SentencePairDataset(quora_train_data, args, isRegression=True)
+        quora_dev_data = SentencePairDataset(quora_dev_data, args)
 
         quora_train_dataloader = DataLoader(
             quora_train_data,
@@ -230,8 +230,8 @@ def train_multitask(args):
             collate_fn=quora_dev_data.collate_fn,
         )
     elif args.task == "etpc" or args.task == "multitask":
-        etpc_train_data = SentenceClassificationDataset(etpc_train_data, args)
-        etpc_dev_data = SentenceClassificationDataset(etpc_dev_data, args)
+        etpc_train_data = SentencePairDataset(etpc_train_data, args, isRegression=True)
+        etpc_dev_data = SentencePairDataset(etpc_dev_data, args)
 
         etpc_train_dataloader = DataLoader(
             etpc_train_data,
@@ -312,14 +312,18 @@ def train_multitask(args):
             for batch in tqdm(
                     sts_train_dataloader, desc=f"train-{epoch + 1:02}", disable=TQDM_DISABLE
             ):
-                b_ids, b_mask, b_labels = (
-                    batch["token_ids"],
-                    batch["attention_mask"],
+                b_ids_1, b_mask_1, b_ids_2, b_mask_2, b_labels = (
+                    batch["token_ids_1"],
+                    batch["attention_mask_1"],
+                    batch["token_ids_2"],
+                    batch["attention_mask_2"],
                     batch["labels"],
                 )
 
-                b_ids = b_ids.to(device)
-                b_mask = b_mask.to(device)
+                b_ids_1 = b_ids_1.to(device)
+                b_ids_2 = b_ids_2.to(device)
+                b_mask_1 = b_mask_1.to(device)
+                b_mask_2 = b_mask_2.to(device)
                 b_labels = b_labels.to(device)
 
                 optimizer.zero_grad()
